@@ -32,6 +32,7 @@
     .collecting { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
     .info { font-size: 11px; color: #666; margin-top: 10px; }
     .platform-info { font-size: 10px; color: #888; margin-top: 5px; }
+    .url-display { font-size: 9px; color: #999; margin-top: 5px; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -43,20 +44,21 @@
   
   <div class="button-group">
     <button id="collectTextBtn">Collect Text Only</button>
-    <button id="collectMediaBtn">Collect Media (Images/Videos)</button>
-    <button id="collectLinksBtn">Collect All Links</button>
+    <button id="collectMediaBtn">Collect Media</button>
+    <button id="collectLinksBtn">Collect Links</button>
   </div>
   
   <div id="status"></div>
   
   <div class="info">
     <strong>Supported Platforms:</strong><br>
-    Social: Twitter, Facebook, Instagram, YouTube, TikTok<br>
-    News: CNN, BBC, Reuters, NYTimes, etc.<br>
-    General: Any website content
+    • Social: Twitter, Facebook, Instagram, YouTube, TikTok<br>
+    • News: CNN, BBC, Reuters, NYTimes, etc.<br>
+    • General: Any website content
   </div>
   
   <div class="platform-info" id="platformInfo"></div>
+  <div class="url-display" id="urlDisplay"></div>
   
   <script src="popup.js"></script>
 </body>

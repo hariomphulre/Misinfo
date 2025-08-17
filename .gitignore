@@ -50,3 +50,4 @@ chrome_extension/dist/
 deploy.sh
 CLOUD_DEPLOYMENT.md
 update_cloud.sh
+*.zip
