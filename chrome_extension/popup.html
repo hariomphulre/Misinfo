@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Misinformation Collector</title>
+  <style>
+    body { width: 300px; padding: 10px; font-family: Arial, sans-serif; }
+    button { width: 100%; padding: 10px; margin: 5px 0; cursor: pointer; }
+    #status { margin-top: 10px; padding: 5px; border-radius: 3px; }
+    .success { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <h3>Misinformation Collector</h3>
+  <button id="collectBtn">Collect Page Content</button>
+  <div id="status"></div>
+  
+  <script>
+    // Configuration - Update this URL to your actual API endpoint
+    const API_BASE_URL = "https://misinformation-collector-zda54hwita-el.a.run.app";
+    
+    document.getElementById("collectBtn").addEventListener("click", async () => {
+      const statusDiv = document.getElementById("status");
+      const collectBtn = document.getElementById("collectBtn");
+      
+      try {
+        collectBtn.disabled = true;
+        collectBtn.textContent = "Collecting...";
+        statusDiv.textContent = "Extracting content...";
+        statusDiv.className = "";
+        
+        // Get current tab
+        const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+        
+        // Extract content from the page
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          function: () => {
+            const content = document.body.innerText;
+            const url = window.location.href;
+            const title = document.title || "No title";
+            
+            return {
+              content: content.trim(),
+              url: url,
+              title: title
+            };
+          }
+        });
+        
+        const pageData = results[0].result;
+        
+        if (!pageData.content || pageData.content.length === 0) {
+          throw new Error("No content found on this page");
+        }
+        
+        // Send data to backend using form data
+        const formData = new FormData();
+        formData.append("source", "chrome_extension");
+        formData.append("type", "text");
+        formData.append("content_text", pageData.content);
+        formData.append("metadata", JSON.stringify({
+          url: pageData.url,
+          timestamp: new Date().toISOString(),
+          title: pageData.title
+        }));
+        
+        // Send to backend
+        const response = await fetch(`${API_BASE_URL}/collect`, {
+          method: "POST",
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        // Show success
+        statusDiv.textContent = "Content collected successfully!";
+        statusDiv.className = "success";
+        
+        // Reset button after delay
+        setTimeout(() => {
+          statusDiv.textContent = "";
+          statusDiv.className = "";
+        }, 3000);
+        
+      } catch (error) {
+        console.error("Collection error:", error);
+        statusDiv.textContent = `Error: ${error.message}`;
+        statusDiv.className = "error";
+      } finally {
+        collectBtn.disabled = false;
+        collectBtn.textContent = "Collect Page Content";
+      }
+    });
+  </script>
+</body>
+</html>

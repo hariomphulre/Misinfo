@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "chrome_extension"
+		},
+		{
+			"path": "backend_service"
+		},
+		{
+			"path": "social_source"
+		}
+	]
+}

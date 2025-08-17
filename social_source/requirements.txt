@@ -1,0 +1,13 @@
+tweepy
+google-api-python-client
+python-dotenv
+requests
+beautifulsoup4
+PyPDF2
+python-docx
+Pillow
+opencv-python
+schedule
+lxml
+feedparser
+newspaper3k
