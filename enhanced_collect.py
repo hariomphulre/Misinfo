@@ -90,7 +90,7 @@ class EnhancedMisinfoCollector:
     def monitor_keywords(self, keywords, platforms=None):
         """Monitor specific keywords across platforms"""
         if platforms is None:
-            platforms = ["reddit"]  # Start with Reddit as it's publicly accessible
+            platforms = ["reddit", "news"]  # Add news as backup when Reddit fails
         
         print(f"🔍 Monitoring keywords: {keywords} on platforms: {platforms}")
         
@@ -101,6 +101,17 @@ class EnhancedMisinfoCollector:
                     reddit_results = self.social_collector.collect_public_social_content("reddit", keyword)
                     if reddit_results:
                         results.extend([{"type": "reddit_post", "data": post} for post in reddit_results])
+                    else:
+                        print(f"⚠️ Reddit collection failed for '{keyword}', trying news sources...")
+                        # Fallback to news collection
+                        news_results = self.social_collector.collect_public_social_content("news_aggregator", keyword)
+                        if news_results:
+                            results.extend([{"type": "news_article", "data": article} for article in news_results])
+            elif platform == "news":
+                for keyword in keywords:
+                    news_results = self.social_collector.collect_public_social_content("news_aggregator", keyword)
+                    if news_results:
+                        results.extend([{"type": "news_article", "data": article} for article in news_results])
         
         return results
     

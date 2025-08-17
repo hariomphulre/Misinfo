@@ -46,3 +46,7 @@ service-account*.json
 # Chrome extension development
 chrome_extension/node_modules/
 chrome_extension/dist/
+
+deploy.sh
+CLOUD_DEPLOYMENT.md
+update_cloud.sh
