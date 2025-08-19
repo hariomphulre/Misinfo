@@ -1,5 +1,5 @@
 // Configuration - Update this URL to your actual API endpoint
-const API_BASE_URL = "https://misinformation-collector-zda54hwita-el.a.run.app";
+const API_BASE_URL = "https://misinformation-collector-322893934340.asia-south1.run.app";
 
 chrome.action.onClicked.addListener((tab) => {
   chrome.scripting.executeScript({

@@ -8,6 +8,15 @@
 		},
 		{
 			"path": "social_source"
+		},
+		{
+			"path": "chrome_extension_updated_2"
+		},
+		{
+			"path": "chrome_extension_updated"
+		},
+		{
+			"path": "functions"
 		}
 	]
 }

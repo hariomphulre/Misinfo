@@ -1,10 +1,13 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from google.cloud import firestore, storage
+from google.cloud import storage
+import firebase_admin
+from firebase_admin import credentials, db
 import os
 from dotenv import load_dotenv
 import json
 import logging
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -14,12 +17,12 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Google Cloud config
-GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "misinfo-tool-bucket-1755447699")
+FIREBASE_DATABASE_URL = os.getenv("FIREBASE_DATABASE_URL", "https://misinfo-469304-default-rtdb.firebaseio.com/")
 
-# Validate required environment variables
-if not GCS_BUCKET_NAME:
-    logger.error("GCS_BUCKET_NAME environment variable is required")
-    raise ValueError("GCS_BUCKET_NAME environment variable is required")
+# Log configuration (don't fail if env vars missing)
+logger.info(f"GCS Bucket: {GCS_BUCKET_NAME}")
+logger.info(f"Firebase URL: {FIREBASE_DATABASE_URL}")
 
 app = FastAPI()
 
@@ -33,9 +36,18 @@ app.add_middleware(
 
 # Initialize clients with error handling
 try:
-    # Firestore client
-    db = firestore.Client()
-    logger.info("Firestore client initialized successfully")
+    # Initialize Firebase Admin SDK
+    # If running on Google Cloud, it will use default credentials
+    # For local development, set GOOGLE_APPLICATION_CREDENTIALS environment variable
+    if not firebase_admin._apps:
+        cred = credentials.ApplicationDefault()
+        firebase_admin.initialize_app(cred, {
+            'databaseURL': FIREBASE_DATABASE_URL
+        })
+    
+    # Get Realtime Database reference
+    database = db.reference()
+    logger.info("Firebase Realtime Database initialized successfully")
     
     # Cloud Storage client
     storage_client = storage.Client()
@@ -59,17 +71,18 @@ async def collect_data(
         if not source or not type:
             raise HTTPException(status_code=400, detail="Source and type are required")
         
-        doc_ref = db.collection("content").add({
+        # Create unique ID for the document
+        content_ref = database.child("content").push({
             "source": source,
             "type": type,
             "content_text": content_text,
             "metadata": metadata_dict,
             "status": "pending",
-            "timestamp": firestore.SERVER_TIMESTAMP
+            "timestamp": datetime.utcnow().isoformat()
         })
         
-        logger.info(f"Data collected successfully with doc_id: {doc_ref[1].id}")
-        return {"status": "success", "doc_id": str(doc_ref[1].id)}
+        logger.info(f"Data collected successfully with doc_id: {content_ref.key}")
+        return {"status": "success", "doc_id": content_ref.key}
         
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON in metadata")
@@ -91,20 +104,21 @@ async def upload_file(file: UploadFile = File(...), source: str = Form(...)):
         blob = bucket.blob(file.filename)
         blob.upload_from_file(file.file)
         
-        # Make blob publicly readable (optional - adjust based on security requirements)
-        blob.make_public()
+        # Get the file URL (no need to make public when uniform bucket-level access is enabled)
+        file_url = f"gs://{GCS_BUCKET_NAME}/{file.filename}"
         
-        doc_ref = db.collection("content").add({
+        # Create unique ID for the document
+        file_ref = database.child("content").push({
             "source": source,
             "type": "file",
-            "file_url": blob.public_url,
+            "file_url": file_url,
             "metadata": {"filename": file.filename, "content_type": file.content_type},
             "status": "pending",
-            "timestamp": firestore.SERVER_TIMESTAMP
+            "timestamp": datetime.utcnow().isoformat()
         })
         
         logger.info(f"File uploaded successfully: {file.filename}")
-        return {"status": "success", "file_url": blob.public_url, "doc_id": str(doc_ref[1].id)}
+        return {"status": "success", "file_url": file_url, "doc_id": file_ref.key}
         
     except Exception as e:
         logger.error(f"Error uploading file: {e}")

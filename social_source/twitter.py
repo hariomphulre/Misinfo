@@ -13,7 +13,7 @@ load_dotenv()
 
 # Environment variables
 TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
-API_BASE_URL = os.getenv("API_BASE_URL", "https://YOUR_CLOUD_RUN_API_URL")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://misinformation-collector-322893934340.asia-south1.run.app")
 
 # Validate environment variables
 if not TWITTER_BEARER_TOKEN:
