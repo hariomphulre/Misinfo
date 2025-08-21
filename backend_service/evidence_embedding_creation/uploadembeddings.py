@@ -5,7 +5,7 @@ import os
 load_dotenv()
 
 project_id=os.getenv("PROJECT_ID")
-location=os.getenv("us-central1")
+location=os.getenv("LOCATION")
 index_name=os.getenv("INDEX")
 bucket_uri=os.getenv("BUCKET_URI")
 
