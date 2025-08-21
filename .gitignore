@@ -51,3 +51,14 @@ deploy.sh
 CLOUD_DEPLOYMENT.md
 update_cloud.sh
 *.zip
+
+
+backend_api/node_modules
+!backend_api/package.json
+!backend_api/package-lock.json
+!backend_api/tsconfig.json
+.python-version
+
+
+backend_service/evidence_embedding_creation/bbc_news.csv
+backend_service/evidence_embedding_creation/.env
