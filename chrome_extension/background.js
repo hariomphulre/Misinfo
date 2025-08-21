@@ -20,6 +20,10 @@ async function extractAndSendContent() {
       return;
     }
     
+    const indianTime = new Date().toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata"
+    });
+
     // Prepare form data
     const formData = new FormData();
     formData.append("source", "chrome_extension");
@@ -27,7 +31,7 @@ async function extractAndSendContent() {
     formData.append("content_text", content.trim());
     formData.append("metadata", JSON.stringify({ 
       url: url,
-      timestamp: new Date().toISOString(),
+      timestamp: indianTime,
       title: title
     }));
     

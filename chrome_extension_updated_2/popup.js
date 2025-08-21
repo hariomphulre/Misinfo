@@ -31,10 +31,14 @@ async function collectData(type) {
       target: { tabId: tab.id },
       function: (collectionType) => {
         // Simple data extraction
+
+        const indianTime = new Date().toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata"
+        });
         const data = {
           url: window.location.href,
           title: document.title || "No title",
-          timestamp: new Date().toISOString(),
+          timestamp: indianTime,
           domain: window.location.hostname
         };
 

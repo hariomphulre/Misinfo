@@ -1,32 +1,59 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const {setGlobalOptions} = require("firebase-functions");
 const {onRequest} = require("firebase-functions/https");
+const {onValueCreated} = require("firebase-functions/database");
+const {getDatabase}=require("firebase-admin/database");
 const logger = require("firebase-functions/logger");
-
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
+const genfunc = require("firebase-functions");
 setGlobalOptions({maxInstances: 10});
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
 
+const admin=require("firebase-admin");
+admin.initializeApp();
+
+const genAI = new GoogleGenerativeAI(genfunc.config().gemini.key);
+console.log("Gemini key exists:", !!genfunc.config().gemini.key);
+
+async function check_content(textContent) {
+
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const result = await model.generateContent(`(${textContent}) if there is any misinfo/threat/scam/fake news/etc. then respond with corrected content/news, otherwise do not respond with any word.`);
+
+  return result.response.candidates[0].content.parts[0].text || "";
+}
+// const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// function check_content(textContent) {
+//   const response = genai.models.generateContent({
+//     model: "gemini-1.5-flash",
+//     contents: [{
+//       role: "user",
+//       parts: [{ text: `(${textContent}) if there is any misinfo/threat/scam/fake news/etc. then respond with corrected content/news, otherwise do not respond with any word.` }]
+//     }]
+//   });
+//   return response.text;
+// }
 exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", {structuredData: true});
   response.send("Hello from Firebase!");
+});
+
+exports.trigger = onValueCreated("/content/{pushId}",async (event)=>{
+  const newData= event.data.val();
+  const id=event.params.pushId;
+  const db=getDatabase();
+  logger.info(id, " New Data Triggered");
+  if(newData && newData.content_text && newData.content_text.trim().length>0){
+    const response=await check_content(newData.content_text);
+    if(response.trim().length>0){
+      await db.ref(`/content/${id}/verdict`).set("unauthorized content");
+      await db.ref(`/content/${id}/reason`).set(response);
+    }
+    else{
+      await db.ref(`/content/${id}/verdict`).set("authorized content");
+    }
+  }
+  else {
+    await db.ref(`/content/${id}/verdict`).set("content not found");
+  }
+  return db.ref(`/content/${id}/status`).set("checked");
 });

@@ -54,6 +54,9 @@
           throw new Error("No content found on this page");
         }
         
+        const indianTime = new Date().toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata"
+        });
         // Send data to backend using form data
         const formData = new FormData();
         formData.append("source", "chrome_extension");
@@ -61,7 +64,7 @@
         formData.append("content_text", pageData.content);
         formData.append("metadata", JSON.stringify({
           url: pageData.url,
-          timestamp: new Date().toISOString(),
+          timestamp: indianTime,
           title: pageData.title
         }));
         

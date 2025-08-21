@@ -21,14 +21,16 @@ function extractContent(apiUrl) {
       return;
     }
     
-    // Prepare form data
+    const indianTime = new Date().toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata"
+    });
     const formData = new FormData();
     formData.append("source", "chrome_extension");
     formData.append("type", "text");
     formData.append("content_text", content.trim());
     formData.append("metadata", JSON.stringify({ 
       url: url,
-      timestamp: new Date().toISOString(),
+      timestamp: indianTime,
       title: title
     }));
     
